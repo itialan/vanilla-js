@@ -10,20 +10,7 @@ class Book {
 // UI Class: Handles UI Tasks
 class UI {
   static displayBooks() {
-    const storedBooks = [
-      {
-        title: 'Book One',
-        author: 'John Fish',
-        isbn: '121212'
-      },
-      {
-        title: 'Book Two',
-        author: 'John Award',
-        isbn: '121212'
-      }
-    ];
-
-    const books = storedBooks;
+    const books = Store.getBooks();
 
     books.forEach((book) => UI.addBookToList(book));
   }
@@ -59,6 +46,9 @@ class UI {
     const container = document.querySelector('.container');
     const form = document.querySelector('#book-form');
     container.insertBefore(div, form);
+
+    // Vanish in 3 seconds
+    setTimeout(() => document.querySelector('.alert').remove(), 3000); 
   }
 
   static clearFields() {
@@ -69,6 +59,37 @@ class UI {
 }
 
 // Store Class: Handles storage (local)
+class Store {
+  static getBooks() {
+    let books;
+
+    if (localStorage.getItem('books') === null) {
+      books = [];
+    } else {
+      books = JSON.parse(localStorage.getItem('books'));
+    }
+
+    return books;
+  }
+
+  static addBook(book) {
+    const books = Store.getBooks();
+    books.push(book);
+    localStorage.setItem('books', JSON.stringify(books));
+  }
+
+  static removeBook(isbn) {
+    const books = Store.getBooks();
+
+    books.forEach((book, index) => {
+      if (book.isbn === isbn) {
+        books.splice(index, 1);
+      }
+    });
+
+    localStorage.setItem('books', JSON.stringify(books));
+  }
+}
 
 // Event: Display Books
 document.addEventListener('DOMContentLoaded', UI.displayBooks);
@@ -92,6 +113,12 @@ document.querySelector('#book-form').addEventListener('submit', (e) => {
     // Add book to UI
     UI.addBookToList(book);
 
+    // Add book to store
+    Store.addBook(book);
+
+    // Show success message
+    UI.showAlert('Book added', 'success');
+
     // Clear fields
     UI.clearFields();
   }
@@ -99,5 +126,12 @@ document.querySelector('#book-form').addEventListener('submit', (e) => {
 
 // Event: Remove a Book
 document.querySelector('#book-list').addEventListener('click', (e) => {
+  // Remove book from UI
   UI.deleteBook(e.target);
+
+  // Remove book from store
+  Store.removeBook(e.target.parentElement.previousElementSibling.textContent);
+
+  // Show success message
+  UI.showAlert('Book removed', 'success');
 });
